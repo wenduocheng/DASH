@@ -90,11 +90,12 @@ class ResNet1D(nn.Module):
                 ks=ks[:3] if ks is not None else None, ds=ds[:3] if ds is not None else None),
             ResNetBlock(in_channels=mid_channels, out_channels=mid_channels * 2, dropout_rate=dropout_rate,
                 ks=ks[3:6] if ks is not None else None, ds=ds[3:6] if ds is not None else None),
-            ResNetBlock(in_channels=mid_channels * 2, out_channels=mid_channels * 2, dropout_rate=dropout_rate,
+            # ResNetBlock(in_channels=mid_channels * 2, out_channels=mid_channels * 2, dropout_rate=dropout_rate,
+            ResNetBlock(in_channels=mid_channels * 2, out_channels=768, dropout_rate=dropout_rate, #
                 ks=ks[6:] if ks is not None else None, ds=ds[6:] if ds is not None else None),
-
         ])
-        self.final = nn.Linear(mid_channels * 2, num_pred_classes)
+        # self.final = nn.Linear(mid_channels * 2, num_pred_classes)
+        self.final = nn.Linear(768, num_pred_classes)
         self.activation = activation
         self.remain_shape = remain_shape
 

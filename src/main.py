@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 from timeit import default_timer
-
+import sklearn  #
 from relax.nas import MixedOptimizer
 from dash import MixtureSupernet
 from task_configs import get_data, get_config, get_model, get_metric, get_hp_configs, get_optimizer
@@ -35,7 +35,7 @@ def main():
 
 
     args = parser.parse_args()
-
+    # torch.cuda.set_device(2)
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     exp_id = 'baseline' if args.baseline else args.experiment_id
     args.save_dir = 'results_acc/'  + args.dataset + '/' + ('default' if len(args.arch) == 0 else args.arch) +'/' + exp_id + "/" + str(args.seed)
@@ -122,6 +122,13 @@ def main():
 
     print("\n------- Start Arch Search --------")
     print("param count:", count_params(model))
+    
+    for batch in train_loader: #
+        x, y = batch
+        print(x.size())
+        print(y.size())
+        break
+    # epochs = 10
     for ep in range(epochs):
         time_start = default_timer()
 
@@ -176,7 +183,7 @@ def main():
                 
                 else:
                     search_scores = []
-                    search_train_loader, search_val_loader, search_test_loader, search_n_train, search_n_val, search_n_test, search_data_kwargs = get_data(args.dataset, accum * batch_size, arch_retrain, True)
+                    search_train_loader, search_val_loader, search_test_loader, search_n_train, search_n_val, search_n_test, search_data_kwargs = get_data(args.dataset, accum * batch_size, arch_retrain, args.valid_split)
                     retrain_model = get_model(arch_retrain, sample_shape, num_classes, config_kwargs, ks = ks, ds = ds)
                     retrain_model = MixtureSupernet.create(retrain_model.cpu(), in_place=True)
 
@@ -184,7 +191,7 @@ def main():
                     torch.save(retrain_model.state_dict(), os.path.join(args.save_dir, 'init.pt'))
 
                     hp_configs, search_epochs, subsampling_ratio = get_hp_configs(args.dataset, n_train)
-                            
+                    
                     search_n_temp = int(subsampling_ratio * search_n_train) + 1
 
                     prev_lr = hp_configs[0][0]
@@ -200,7 +207,7 @@ def main():
 
                             best_score_prev = best_score
                             prev_lr = lr
-
+                        print('main 210',ks,ds)
                         retrain_model = get_model(arch_retrain, sample_shape, num_classes, config_kwargs, ks = ks, ds = ds, dropout = drop_rate)
                         retrain_model = MixtureSupernet.create(retrain_model.cpu(), in_place=True)
                         retrain_model = retrain_model.to(args.device)
@@ -212,7 +219,9 @@ def main():
                         retrain_scheduler = torch.optim.lr_scheduler.LambdaLR(retrain_optimizer, lr_lambda=weight_sched_train)
                         
                         retrain_time_start = default_timer()
-
+                        #
+                        # search_epochs = 20 #
+                        #
                         for retrain_ep in range(search_epochs):
 
                             retrain_loss = train_one_epoch(retrain_model, retrain_optimizer, retrain_scheduler, args.device, search_train_loader, loss, retrain_clip, 1, search_n_temp, decoder, transform, lr_sched_iter)
@@ -232,6 +241,9 @@ def main():
                     del search_train_loader, search_val_loader
 
                 print("\n------- Start Retrain --------")
+                print("[searched kernel pattern] ks:", ks, "\tds:", ds)
+                print("[selected hp] lr = ", "%.6f" % lr, " drop rate = ", "%.2f" % drop_rate, " weight decay = ", "%.6f" % weight_decay, " momentum = ", "%.2f" % momentum)
+
                 retrain_model = get_model(arch_retrain, sample_shape, num_classes, config_kwargs, ks = ks, ds = ds, dropout = drop_rate)
                 retrain_train_loader, retrain_val_loader, retrain_test_loader, retrain_n_train, retrain_n_val, retrain_n_test, data_kwargs = get_data(args.dataset, accum * batch_size, arch_retrain, args.valid_split)
                 retrain_n_temp = int(quick_retrain * retrain_n_train) + 1 if quick_retrain < 1 else retrain_n_train
@@ -316,7 +328,7 @@ def train_one_epoch(model, optimizer, scheduler, device, loader, loss, clip, acc
             x, y = data 
         
         x, y = x.to(device), y.to(device)
-            
+        
         out = model(x)
 
         if decoder is not None:
@@ -326,7 +338,7 @@ def train_one_epoch(model, optimizer, scheduler, device, loader, loss, clip, acc
         if transform is not None:
             out = transform(out, z)
             y = transform(y, z)
-                        
+
         l = loss(out, y)
         l.backward()
 
@@ -378,9 +390,10 @@ def evaluate(model, device, loader, loss, metric, n_eval, decoder=None, transfor
                 if transform is not None:
                     out = transform(out, z)
                     y = transform(y, z)
-
-                eval_loss += loss(out, y).item()
+                
+                eval_loss += loss(out, y).item() 
                 eval_score += metric(out, y).item()
+                # eval_score += metric(y, torch.round(out)).item() # human_enhancer
 
         eval_loss /= n_eval
         eval_score /= n_eval

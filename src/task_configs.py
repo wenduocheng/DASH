@@ -15,12 +15,14 @@ from networks.deepsea import DeepSEA
 from networks.fno import Net2d
 from networks.deepcon import DeepCon
 from networks.wrn1d import ResNet1D
+from networks.vq import Encoder
 
 # import data loaders, task-specific losses and metrics
-from data_loaders import load_cifar, load_mnist, load_deepsea, load_darcy_flow, load_psicov, load_music, load_ecg, load_satellite, load_ninapro, load_cosmic, load_spherical, load_fsd
+from data_loaders import load_cifar, load_mnist, load_deepsea, load_darcy_flow, load_psicov, load_music, load_ecg, load_satellite, load_ninapro, load_cosmic, load_spherical, load_fsd 
+from data_loaders import load_deepsea_full, load_genomic_benchmarks # 
 from task_utils import FocalLoss, LpLoss
 from task_utils import mask, accuracy, accuracy_onehot, auroc, psicov_mae, ecg_f1, fnr, map_value
-
+from sklearn import metrics
 # import customized optimizers
 # from optimizers import ExpGrad
 
@@ -29,6 +31,9 @@ def get_data(dataset, batch_size, arch, valid_split):
 
     if dataset == "your_new_task": # modify this to experiment with a new task
         train_loader, val_loader, test_loader = None, None, None
+    elif dataset in ["dummy_mouse_enhancers_ensembl", "demo_coding_vs_intergenomic_seqs", "demo_human_or_worm", "human_enhancers_cohn", "human_enhancers_ensembl", "human_ensembl_regulatory", "human_nontata_promoters", "human_ocr_ensembl"]: 
+        # train_loader, val_loader, test_loader = load_genomic_benchmarks(batch_size, one_hot = True, valid_split=valid_split, dataset_name = dataset)
+        train_loader, val_loader, test_loader = load_genomic_benchmarks(batch_size, one_hot = False, valid_split=valid_split, dataset_name = dataset)
     elif dataset == "CIFAR10":
         train_loader, val_loader, test_loader = load_cifar(10, batch_size, valid_split=valid_split)
     elif dataset == "CIFAR10-PERM":
@@ -45,6 +50,8 @@ def get_data(dataset, batch_size, arch, valid_split):
         train_loader, val_loader, test_loader = load_spherical(batch_size, valid_split=valid_split)
     elif dataset == "DEEPSEA":
         train_loader, val_loader, test_loader = load_deepsea(batch_size, valid_split=valid_split)
+    elif dataset == "DEEPSEA_FULL":
+        train_loader, val_loader, test_loader = load_deepsea_full(batch_size=256, one_hot = True, valid_split=-1)
     elif dataset == "DARCY-FLOW-5":
         train_loader, val_loader, test_loader, y_normalizer = load_darcy_flow(batch_size, sub = 5, arch = arch, valid_split=valid_split)
         data_kwargs = {"decoder": y_normalizer}
@@ -72,7 +79,7 @@ def get_data(dataset, batch_size, arch, valid_split):
     if not valid_split:
         val_loader = test_loader
         n_val = n_test
-
+    print('n_val',n_val)
     return train_loader, val_loader, test_loader, n_train, n_val, n_test, data_kwargs
 
 
@@ -88,6 +95,8 @@ def get_model(arch, sample_shape, num_classes, config_kwargs, ks = None, ds = No
     if len(sample_shape) == 4:
 
         if arch == 'your_new_arch': # modify this to experiment with a new architecture
+            model = None
+        elif 'unet' in arch:
             model = None
         elif 'wrn' in arch:
             if 'sep' in arch:
@@ -120,6 +129,11 @@ def get_model(arch, sample_shape, num_classes, config_kwargs, ks = None, ds = No
             model = ResNet1D(in_channels = in_channel, mid_channels=mid_channels, num_pred_classes=num_classes, dropout_rate=dropout, ks = ks, ds = ds, activation=activation, remain_shape=remain_shape)
         elif arch == 'deepsea':
             model = DeepSEA(ks = ks, ds = ds)
+        elif arch == 'unet':
+            embed_dim = 1024
+            output_shape = 2
+            print('135',sample_shape[-1])
+            model = Encoder(in_channels=embed_dim,f_channel=sample_shape[-1],num_class=output_shape)
    
     return model
 
@@ -140,6 +154,50 @@ def get_config(dataset):
         batch_size = 64
         arch_default = 'wrn'
 
+    elif dataset in ["dummy_mouse_enhancers_ensembl", "demo_coding_vs_intergenomic_seqs", "demo_human_or_worm", "human_enhancers_cohn", "human_enhancers_ensembl", "human_ensembl_regulatory", "human_nontata_promoters", "human_ocr_ensembl"]:  
+        # kernel_choices_default, dilation_choices_default = [3, 5, 7, 9, 11], [1, 3, 5, 7]
+        kernel_choices_default, dilation_choices_default = [3, 5, 7, 9, 11], [1, 3, 5, 7]
+        loss = nn.CrossEntropyLoss()
+        
+        batch_size = 16 # 64
+        # arch_default = 'wrn'
+        arch_default = 'unet'
+        
+        # config_kwargs['activation'] = 'softmax'
+        # config_kwargs['grad_scale'] = 10
+
+        if dataset == "dummy_mouse_enhancers_ensembl":
+            # dims, sample_shape, num_classes = 1, (1, 9, 4710), 2
+            # dims, sample_shape, num_classes = 1, (1, 5, 4707), 2
+            dims, sample_shape, num_classes = 1, (1, 1, 4707), 2
+        elif dataset == "demo_coding_vs_intergenomic_seqs":
+            # dims, sample_shape, num_classes = 1, (1, 7, 202), 2
+            # dims, sample_shape, num_classes = 1, (1, 5, 200), 2
+            dims, sample_shape, num_classes = 1, (1, 1, 200), 2
+        elif dataset == "demo_human_or_worm":
+            # dims, sample_shape, num_classes = 1, (1, 8, 202), 2
+            # dims, sample_shape, num_classes = 1, (1, 5, 200), 2
+            dims, sample_shape, num_classes = 1, (1, 1, 200), 2
+        elif dataset == "human_enhancers_cohn":
+            # dims, sample_shape, num_classes = 1, (1, 7, 502), 2
+            # dims, sample_shape, num_classes = 1, (1, 5, 500), 2
+            dims, sample_shape, num_classes = 1, (1, 1, 500), 2
+        elif dataset == "human_enhancers_ensembl":
+            # dims, sample_shape, num_classes = 1, (1, 9, 576), 2 
+            # dims, sample_shape, num_classes = 1, (1, 5, 573), 2
+            dims, sample_shape, num_classes = 1, (1, 1, 573), 2
+        elif dataset == "human_ensembl_regulatory":
+            # dims, sample_shape, num_classes = 1, (1, 9, 805), 3
+            # dims, sample_shape, num_classes = 1, (1, 5, 802), 3
+            dims, sample_shape, num_classes = 1, (1, 1, 802), 3
+        elif dataset == "human_nontata_promoters":
+            # dims, sample_shape, num_classes = 1, (1, 7, 253), 1
+            # dims, sample_shape, num_classes = 1, (1, 5, 251), 2
+            dims, sample_shape, num_classes = 1, (1, 1, 251), 2
+        elif dataset == "human_ocr_ensembl":
+            # dims, sample_shape, num_classes = 1, (1, 9, 596), 2
+            # dims, sample_shape, num_classes = 1, (1, 5, 593), 2
+            dims, sample_shape, num_classes = 1, (1, 1, 593), 2
 
     elif dataset[:5] == "CIFAR":
         dims, sample_shape, num_classes = 2, (1, 3, 32, 32), 10 if dataset in ['CIFAR10', 'CIFAR10-PERM'] else 100
@@ -150,7 +208,6 @@ def get_config(dataset):
         arch_default = 'wrn-16-1' 
         config_kwargs['arch_retrain_default'] = 'wrn-16-4' 
         config_kwargs['grad_scale'] = 5000
-
 
     elif dataset == 'SPHERICAL':
         dims, sample_shape, num_classes = 2, (1, 3, 60, 60), 100
@@ -267,15 +324,24 @@ def get_config(dataset):
         kernel_choices_default, dilation_choices_default = [3, 7, 11, 15, 19], [1, 3, 7, 15]
         loss = nn.BCEWithLogitsLoss(pos_weight=4 * torch.ones((36, )))
 
-        batch_size = 256
+        batch_size = 256 # 256 
         arch_default = 'wrn'  
         config_kwargs['grad_scale'] = 10 
 
+    elif dataset == "DEEPSEA_FULL":
+        dims, sample_shape, num_classes = 1, (1, 4, 1000), 919
+        kernel_choices_default, dilation_choices_default = [3, 7, 11, 15, 19], [1, 3, 7, 15]
+        loss = nn.BCEWithLogitsLoss(pos_weight=4 * torch.ones((919, )))
+
+        batch_size = 256 # 256 
+        arch_default = 'wrn'  
+        config_kwargs['grad_scale'] = 10
 
     lr, arch_lr = (1e-2, 5e-3) if config_kwargs['remain_shape'] else (0.1, 0.05) 
 
     if arch_default[:3] == 'wrn':
         epochs_default, retrain_epochs = 100, 200
+        # epochs_default, retrain_epochs = 20, 20
         retrain_freq = epochs_default
         opt, arch_opt = partial(torch.optim.SGD, momentum=0.9, nesterov=True), partial(torch.optim.SGD, momentum=0.9, nesterov=True)
         weight_decay = 5e-4 
@@ -334,6 +400,39 @@ def get_config(dataset):
         
         def weight_sched_train(epoch):
             return base ** (epoch // 20)
+    
+    elif arch_default == 'unet':
+        epochs_default, retrain_epochs = 20, 20
+        retrain_freq = epochs_default
+        # opt, arch_opt = partial(torch.optim.SGD, momentum=0.9, nesterov=True), partial(torch.optim.SGD, momentum=0.9, nesterov=True)
+        opt, arch_opt = torch.optim.AdamW, torch.optim.AdamW
+        weight_decay = 5e-4 
+        
+        sched = [60, 120, 160]
+        def weight_sched_search(epoch):
+            optim_factor = 0
+            for i in range(len(sched)):
+                if epoch > sched[len(sched) - 1 - i]:
+                    optim_factor = len(sched) - i
+                    break
+
+            return math.pow(base, optim_factor)
+
+        if dims == 1:
+            sched = [30, 60, 90, 120, 160]
+        else:
+            sched = [60, 120, 160]
+        
+        def weight_sched_train(epoch):    
+            optim_factor = 0
+            for i in range(len(sched)):
+                if epoch > sched[len(sched) - 1 - i]:
+                    optim_factor = len(sched) - i
+                    break
+                    
+            return math.pow(base, optim_factor)
+        
+        
 
     # arch_opt = ExpGrad
 
@@ -344,10 +443,14 @@ def get_config(dataset):
 def get_metric(dataset):
     if dataset == "your_new_task": # modify this to experiment with a new task
         return accuracy, np.max
+    if dataset in ["dummy_mouse_enhancers_ensembl", "demo_coding_vs_intergenomic_seqs", "demo_human_or_worm", "human_enhancers_cohn", "human_enhancers_ensembl", "human_ensembl_regulatory", "human_nontata_promoters", "human_ocr_ensembl"]:  #
+        return accuracy, np.max #
     if dataset[:5] == "CIFAR" or dataset[:5] == "MNIST" or dataset == "SATELLITE" or dataset == "SPHERICAL":
         return accuracy, np.max
     if dataset == "DEEPSEA":
         return auroc, np.max
+    if dataset == "DEEPSEA_FULL": #
+        return auroc, np.max #
     if dataset == "DARCY-FLOW-5":
         return LpLoss(size_average=True), np.min
     if dataset == 'PSICOV':

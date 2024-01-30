@@ -10,10 +10,109 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torch.utils.data.sampler import SubsetRandomSampler
+import scipy.io #
+from torch.utils.data import DataLoader #
+
+from random import random #
+
+from genomic_benchmarks_utils import GenomicBenchmarkDataset, CharacterTokenizer #
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 """Customized Data Loaders"""
+# deepsea full dataset
+def load_deepsea_full(batch_size, one_hot = True, valid_split=-1):
+    import mat73 # 
+    train_data = mat73.loadmat('/home/wenduoc/ORCA/src/datasets/deepsea_full_train.mat')
+    valid_data = scipy.io.loadmat('/home/wenduoc/ORCA/src/datasets/deepsea_full_valid.mat')
+    test_data = scipy.io.loadmat('/home/wenduoc/ORCA/src/datasets/deepsea_full_test.mat')
+    
+
+    x_train = torch.FloatTensor(train_data['trainxdata']) # 
+    y_train= torch.FloatTensor(train_data['traindata']) #
+    x_val = torch.FloatTensor(valid_data['validxdata']) # 
+    y_val= torch.FloatTensor(valid_data['validdata']) # 
+    x_test = torch.FloatTensor(test_data['testxdata']) # 
+    y_test= torch.FloatTensor(test_data['testdata']) # 
+
+    print(x_train.shape)
+    print(y_train.shape)
+    print(x_val.shape)
+    print(y_val.shape)
+    print(x_test.shape)
+    print(y_test.shape)
+
+    train_loader = torch.utils.data.DataLoader(dataset = torch.utils.data.TensorDataset(x_train, y_train), batch_size = batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    val_loader = torch.utils.data.DataLoader(dataset = torch.utils.data.TensorDataset(x_val, y_val), batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    test_loader = torch.utils.data.DataLoader(dataset = torch.utils.data.TensorDataset(x_test, y_test), batch_size = batch_size, shuffle=False, num_workers=4, pin_memory=True)
+
+    print("Train dataset samples = {}, batches = {}".format(x_train.shape[0], len(train_loader)))
+    print("Valid dataset samples = {}, batches = {}".format(x_val.shape[0], len(val_loader)))
+    print("Test dataset samples = {}, batches = {}".format(x_test.shape[0], len(test_loader)))
+
+    return train_loader, val_loader, test_loader
+
+
+def load_genomic_benchmarks(batch_size, one_hot = True, valid_split=-1, dataset_name = 'human_ocr_ensembl'):
+    if dataset_name == "dummy_mouse_enhancers_ensembl":
+        max_length = 4707
+    if dataset_name == "demo_coding_vs_intergenomic_seqs":
+        max_length = 200
+    if dataset_name == "demo_human_or_worm":
+        max_length = 200
+    if dataset_name == "human_enhancers_cohn":
+        max_length = 500
+    if dataset_name == "human_enhancers_ensembl":
+        max_length = 573  
+    if dataset_name == "human_ensembl_regulatory":
+        max_length = 802  
+    if dataset_name == "human_nontata_promoters":
+        max_length = 251  
+    if dataset_name == "human_ocr_ensembl":
+        max_length = 593  
+        
+    # if dataset_name in ['dummy_mouse_enhancers_ensembl', 'human_enhancers_ensembl', 'human_ensembl_regulatory','human_ocr_ensembl']:
+    #   use_padding = True
+    # else:
+    #   use_padding = False
+    use_padding = True
+    rc_aug = False  # reverse complement augmentation
+    add_eos = False  # add end of sentence token
+
+    tokenizer = CharacterTokenizer(
+            characters=['A', 'C', 'G', 'T', 'N'],  # add DNA characters, N is uncertain
+            model_max_length=max_length + 2,  # to account for special tokens, like EOS
+            add_special_tokens=False,  # we handle special tokens elsewhere
+            padding_side='left', # since HyenaDNA is causal, we pad on the left
+        )
+
+    ds_train = GenomicBenchmarkDataset(
+            max_length = max_length,
+            use_padding = use_padding,
+            split = 'train',
+            tokenizer=tokenizer,
+            dataset_name=dataset_name,
+            rc_aug=rc_aug,
+            add_eos=add_eos,
+            one_hot=one_hot
+        )
+
+    ds_test = GenomicBenchmarkDataset(
+        max_length = max_length,
+        use_padding = use_padding,
+        split = 'test',
+        tokenizer=tokenizer,
+        dataset_name=dataset_name,
+        rc_aug=rc_aug,
+        add_eos=add_eos,
+        one_hot=one_hot
+    )
+
+    train_loader = DataLoader(ds_train, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(ds_test, batch_size=batch_size, shuffle=False)
+
+    return train_loader, None, test_loader
+
 
 def load_cifar(num_classes, batch_size, permute=False, seed=1111, valid_split=-1):
     if num_classes == 10:
@@ -1232,3 +1331,7 @@ class dotdict(dict):
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+
+
+
+
