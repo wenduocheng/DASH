@@ -35,7 +35,7 @@ def main():
 
 
     args = parser.parse_args()
-    # torch.cuda.set_device(2)
+    torch.cuda.set_device(2)
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     exp_id = 'baseline' if args.baseline else args.experiment_id
     args.save_dir = 'results_acc/'  + args.dataset + '/' + ('default' if len(args.arch) == 0 else args.arch) +'/' + exp_id + "/" + str(args.seed)

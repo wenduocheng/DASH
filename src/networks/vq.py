@@ -90,7 +90,7 @@ class ResnetBlock(nn.Module):
         # ks = 9 if in_channels == 16 else 3
         # pads = ks // 2
 
-        ks=None
+    
         if ks is None:
             if in_channels == 16:
                 kernel_sizes = [9, 3] 
@@ -99,17 +99,18 @@ class ResnetBlock(nn.Module):
         else:
             kernel_sizes = ks
         dilations = [1, 1] if ds is None else ds
+        
 
-        pads = kernel_sizes[0] // 2
+        # pads = kernel_sizes[0] // 2
 
         self.norm1 = Normalize(in_channels)
         self.conv1 = torch.nn.Conv1d(in_channels,
                                      out_channels,
                                      kernel_size=kernel_sizes[0],
                                      stride=1,
-                                    #  dilation = dilations[0],
-                                    #  padding=(kernel_sizes[0] - 1) * dilations[0],
-                                     padding=pads
+                                     dilation = dilations[0],
+                                     padding=(kernel_sizes[0] - 1) * dilations[0] // 2,
+                                    #  padding=pads
                                      )
         self.norm2 = Normalize(out_channels)
         self.dropout = torch.nn.Dropout(dropout)
@@ -117,9 +118,9 @@ class ResnetBlock(nn.Module):
                                      out_channels,
                                      kernel_size=kernel_sizes[1],
                                      stride=1,
-                                    #  dilation = dilations[1],
-                                    #  padding=(kernel_sizes[0] - 1) * dilations[0],
-                                     padding=1
+                                     dilation = dilations[1],
+                                     padding=(kernel_sizes[1] - 1) * dilations[1]// 2,
+                                    #  padding=1
                                      )
         if self.in_channels != self.out_channels:
             if self.use_conv_shortcut:
@@ -140,18 +141,18 @@ class ResnetBlock(nn.Module):
         h = self.norm1(h)
         h = nonlinearity(h)
         h = self.conv1(h)
-
+        # print('144',h.size())
         h = self.norm2(h)
         h = nonlinearity(h)
         h = self.dropout(h)
         h = self.conv2(h)
-
+        # print('149',h.size())
         if self.in_channels != self.out_channels:
             if self.use_conv_shortcut:
                 x = self.conv_shortcut(x)
             else:
                 x = self.nin_shortcut(x)
-        print('153',x.size(),h.size())
+        # print('153',x.size(),h.size())
         return x+h
 
 
@@ -264,13 +265,13 @@ class Encoder(nn.Module):
         b, c, l = x.shape 
         x = self.dnaemb(x.transpose(1,2).reshape(-1,c).long()) # x: (64,1,500) -->transpose (64,500,1) -->reshape(32000,1) --> dnaembed (32000, 1, 1024) 
         x = x.squeeze(1).reshape(b,l,-1).transpose(1,2)
-        print('243',x.shape)
+        # print('243',x.shape)
         x= self.model(x)
-        print('245',x.shape)
+        # print('245',x.shape)
         out = x.transpose(1,2)
-        print('247',out.shape)
+        # print('247',out.shape)
         out = self.final(out).mean(1)
-        print('249',out.shape)
+        # print('249',out.shape)
         if return_embeddings:
             return out, x
         else:
