@@ -239,20 +239,24 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         # channels = [c * 5 for c in channels]
         layers = [nn.Conv1d(in_channels, channels[0], 31, 1, padding=15)]   # Conv1d(1024, 16, kernel_size=(31,), stride=(1,), padding=(15,))
+        count=0
         for i in range(len(channels) - 1): # i=5
             in_channels = channels[i]
             out_channels = channels[i + 1]
             for j in range(num_res_blocks): # 2
-                layers.append(ResnetBlock(in_channels=in_channels, out_channels=out_channels, dropout=0.0, ks=ks[:2] if ks is not None else None, ds=ds[:2] if ds is not None else None))
+                layers.append(ResnetBlock(in_channels=in_channels, out_channels=out_channels, dropout=0.0, ks=ks[count:count+2] if ks is not None else None, ds=ds[count:count+2] if ds is not None else None))
+                count+=2
                 in_channels = out_channels
                 if True:#resolution in attn_resolutions:
                     layers.append(AttnBlock(in_channels))
             if i < 0:#len(channels)- 2:
                 layers.append(Downsample(channels[i + 1], with_conv=True))
                 resolution //= 2
-        layers.append(ResnetBlock(in_channels=channels[-1], out_channels=channels[-1], dropout=0.0, ks=ks[:2] if ks is not None else None, ds=ds[:2] if ds is not None else None))
+        layers.append(ResnetBlock(in_channels=channels[-1], out_channels=channels[-1], dropout=0.0, ks=ks[count:count+2] if ks is not None else None, ds=ds[count:count+2] if ds is not None else None))
+        count+=2
         layers.append(AttnBlock(channels[-1]))
-        layers.append(ResnetBlock(in_channels=channels[-1], out_channels=channels[-1], dropout=0.0, ks=ks[:2] if ks is not None else None, ds=ds[:2] if ds is not None else None))
+        layers.append(ResnetBlock(in_channels=channels[-1], out_channels=channels[-1], dropout=0.0, ks=ks[count:count+2] if ks is not None else None, ds=ds[count:count+2] if ds is not None else None))
+        count+=2
         layers.append(Normalize(channels[-1]))
         layers.append(Swish())
         layers.append(nn.Conv1d(channels[-1], z_channels, 3, 1, 1))

@@ -132,8 +132,8 @@ def get_model(arch, sample_shape, num_classes, config_kwargs, ks = None, ds = No
         elif arch == 'unet':
             embed_dim = 1024
             output_shape = 2
-            print('135',sample_shape[-1])
-            model = Encoder(in_channels=embed_dim,f_channel=sample_shape[-1],num_class=output_shape)
+            print('135',sample_shape[-1]) 
+            model = Encoder(in_channels=embed_dim, f_channel=sample_shape[-1], num_class=output_shape, ks = ks, ds = ds)
    
     return model
 
@@ -402,7 +402,7 @@ def get_config(dataset):
             return base ** (epoch // 20)
     
     elif arch_default == 'unet':
-        epochs_default, retrain_epochs = 20, 20
+        epochs_default, retrain_epochs = 80, 80
         retrain_freq = epochs_default
         # opt, arch_opt = partial(torch.optim.SGD, momentum=0.9, nesterov=True), partial(torch.optim.SGD, momentum=0.9, nesterov=True)
         opt, arch_opt = torch.optim.AdamW, torch.optim.AdamW
@@ -479,7 +479,8 @@ def get_hp_configs(dataset, n_train):
     else:
         subsamping_ratio = 0.01
 
-    lrs = 0.1 ** np.arange(1, 4)
+    # lrs = 0.1 ** np.arange(1, 4)
+    lrs = 0.1 ** np.arange(1, 5)
 
     dropout_rates = [0, 0.05]
     wd = [5e-4, 5e-6]
