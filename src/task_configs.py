@@ -340,8 +340,8 @@ def get_config(dataset):
     lr, arch_lr = (1e-2, 5e-3) if config_kwargs['remain_shape'] else (0.1, 0.05) 
 
     if arch_default[:3] == 'wrn':
-        epochs_default, retrain_epochs = 100, 200
-        # epochs_default, retrain_epochs = 20, 20
+        # epochs_default, retrain_epochs = 100, 200
+        epochs_default, retrain_epochs = 10, 10
         retrain_freq = epochs_default
         opt, arch_opt = partial(torch.optim.SGD, momentum=0.9, nesterov=True), partial(torch.optim.SGD, momentum=0.9, nesterov=True)
         weight_decay = 5e-4 
@@ -402,7 +402,7 @@ def get_config(dataset):
             return base ** (epoch // 20)
     
     elif arch_default == 'unet':
-        epochs_default, retrain_epochs = 80, 80
+        epochs_default, retrain_epochs = 10, 10
         retrain_freq = epochs_default
         # opt, arch_opt = partial(torch.optim.SGD, momentum=0.9, nesterov=True), partial(torch.optim.SGD, momentum=0.9, nesterov=True)
         opt, arch_opt = torch.optim.AdamW, torch.optim.AdamW
