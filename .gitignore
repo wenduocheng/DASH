@@ -1,0 +1,6 @@
+*.log
+src/*.log
+results_acc
+__pycache__
+*.sh
+logs

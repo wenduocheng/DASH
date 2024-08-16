@@ -1,0 +1,99 @@
+------- Experiment Summary --------
+{'dataset': 'splice_sites_all', 'arch': 'unet', 'experiment_id': '0', 'baseline': 0, 'seed': 3, 'kernel_choices': [3, 9], 'dilation_choices': [1, 3], 'verbose': 1, 'print_freq': 1, 'valid_split': 0, 'reproducibility': 0, 'separable': 1, 'stream': 1, 'device': 'cuda', 'save_dir': 'results_acc/splice_sites_all/unet/0/3'}
+ks:  [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+ds:  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+144 inc.double_conv.0 Conv1d(5, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+144 inc.double_conv.3 Conv1d(64, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+144 down1.maxpool_conv.1.double_conv.0 Conv1d(64, 128, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down1.maxpool_conv.1.double_conv.0
+144 down1.maxpool_conv.1.double_conv.3 Conv1d(128, 128, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down1.maxpool_conv.1.double_conv.3
+144 down2.maxpool_conv.1.double_conv.0 Conv1d(128, 256, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down2.maxpool_conv.1.double_conv.0
+144 down2.maxpool_conv.1.double_conv.3 Conv1d(256, 256, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down2.maxpool_conv.1.double_conv.3
+144 down3.maxpool_conv.1.double_conv.0 Conv1d(256, 512, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down3.maxpool_conv.1.double_conv.0
+144 down3.maxpool_conv.1.double_conv.3 Conv1d(512, 512, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down3.maxpool_conv.1.double_conv.3
+144 down4.maxpool_conv.1.double_conv.0 Conv1d(512, 512, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down4.maxpool_conv.1.double_conv.0
+144 down4.maxpool_conv.1.double_conv.3 Conv1d(512, 512, kernel_size=(3,), stride=(1,), padding=(1,))
+146 down4.maxpool_conv.1.double_conv.3
+144 up1.conv.double_conv.0 Conv1d(1024, 256, kernel_size=(3,), stride=(1,), padding=(1,))
+144 up1.conv.double_conv.3 Conv1d(256, 256, kernel_size=(3,), stride=(1,), padding=(1,))
+144 up2.conv.double_conv.0 Conv1d(512, 128, kernel_size=(3,), stride=(1,), padding=(1,))
+144 up2.conv.double_conv.3 Conv1d(128, 128, kernel_size=(3,), stride=(1,), padding=(1,))
+144 up3.conv.double_conv.0 Conv1d(256, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+144 up3.conv.double_conv.3 Conv1d(64, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+144 up4.conv.double_conv.0 Conv1d(128, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+144 up4.conv.double_conv.3 Conv1d(64, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+167: 0 inc.double_conv.0.L.0.alpha Parameter containing:
+tensor([-5.7202e-04, -3.2274e-05,  8.8728e-04, -7.0611e-04],
+       requires_grad=True)
+167: 1 inc.double_conv.3.L.0.alpha Parameter containing:
+tensor([-0.0007,  0.0004, -0.0010, -0.0006], requires_grad=True)
+167: 2 up1.conv.double_conv.0.L.0.alpha Parameter containing:
+tensor([-0.0010, -0.0007, -0.0003,  0.0002], requires_grad=True)
+167: 3 up1.conv.double_conv.3.L.0.alpha Parameter containing:
+tensor([-0.0006, -0.0015, -0.0006,  0.0013], requires_grad=True)
+167: 4 up2.conv.double_conv.0.L.0.alpha Parameter containing:
+tensor([-0.0001, -0.0009, -0.0009,  0.0020], requires_grad=True)
+167: 5 up2.conv.double_conv.3.L.0.alpha Parameter containing:
+tensor([ 0.0002,  0.0005, -0.0008,  0.0004], requires_grad=True)
+167: 6 up3.conv.double_conv.0.L.0.alpha Parameter containing:
+tensor([-0.0007,  0.0017,  0.0019, -0.0009], requires_grad=True)
+167: 7 up3.conv.double_conv.3.L.0.alpha Parameter containing:
+tensor([ 0.0002,  0.0009,  0.0011, -0.0004], requires_grad=True)
+167: 8 up4.conv.double_conv.0.L.0.alpha Parameter containing:
+tensor([-0.0005,  0.0010,  0.0004, -0.0012], requires_grad=True)
+167: 9 up4.conv.double_conv.3.L.0.alpha Parameter containing:
+tensor([-7.5513e-05, -5.3111e-04,  1.9030e-03,  4.4070e-04],
+       requires_grad=True)
+search arch: unet 	retrain arch: unet
+batch size: 128 	lr: 0.1 	arch lr: 0.05
+arch configs: {'temp': 1, 'arch_retrain_default': None, 'grad_scale': 100, 'activation': None, 'remain_shape': False, 'pool_k': 8, 'squeeze': False, 'dropout': 0}
+kernel choices: [3, 5, 7, 9, 11] 	dilation choices: [1, 3, 5, 7]
+num train batch: 211 	num validation batch: 24 	num test batch: 24
+
+------- Start Arch Search --------
+param count: 11608939
+inc.double_conv.0.L.0.alpha tensor([-0.0037, -0.0086,  0.0115, -0.0034], device='cuda:0')
+inc.double_conv.3.L.0.alpha tensor([ 0.0007, -0.0004, -0.0032, -0.0029], device='cuda:0')
+up1.conv.double_conv.0.L.0.alpha tensor([-0.0040,  0.0006,  0.0002, -0.0025], device='cuda:0')
+up1.conv.double_conv.3.L.0.alpha tensor([-0.0049, -0.0036, -0.0040,  0.0074], device='cuda:0')
+up2.conv.double_conv.0.L.0.alpha tensor([-0.0081,  0.0103, -0.0034, -0.0025], device='cuda:0')
+up2.conv.double_conv.3.L.0.alpha tensor([ 0.0019, -0.0004,  0.0026, -0.0075], device='cuda:0')
+up3.conv.double_conv.0.L.0.alpha tensor([ 0.0013, -0.0041,  0.0114, -0.0105], device='cuda:0')
+up3.conv.double_conv.3.L.0.alpha tensor([-0.0121,  0.0100,  0.0153, -0.0151], device='cuda:0')
+up4.conv.double_conv.0.L.0.alpha tensor([-0.0040, -0.0005,  0.0126, -0.0123], device='cuda:0')
+up4.conv.double_conv.3.L.0.alpha tensor([ 0.0007,  0.0020, -0.0096,  0.0048], device='cuda:0')
+Kernel pattern (name, k, d): [9, 3, 3, 9, 3, 9, 9, 9, 9, 9] 72 [1, 1, 3, 3, 3, 1, 1, 1, 1, 3] 18
+[train 0 0.100000 ] time elapsed: 12.0761 	train loss: 1.0977
+inc.double_conv.0.L.0.alpha tensor([-0.0090, -0.0229,  0.0316, -0.0126], device='cuda:0')
+inc.double_conv.3.L.0.alpha tensor([ 0.0172, -0.0339,  0.0162, -0.0139], device='cuda:0')
+up1.conv.double_conv.0.L.0.alpha tensor([-0.0338, -0.0095, -0.0132,  0.0422], device='cuda:0')
+up1.conv.double_conv.3.L.0.alpha tensor([-0.0326, -0.0148, -0.0103,  0.0439], device='cuda:0')
+up2.conv.double_conv.0.L.0.alpha tensor([-0.0196,  0.0025,  0.0075, -0.0028], device='cuda:0')
+up2.conv.double_conv.3.L.0.alpha tensor([-0.0250,  0.0069,  0.0070, -0.0011], device='cuda:0')
+up3.conv.double_conv.0.L.0.alpha tensor([ 0.0173, -0.0162,  0.0103, -0.0219], device='cuda:0')
+up3.conv.double_conv.3.L.0.alpha tensor([-0.0157,  0.0274,  0.0080, -0.0303], device='cuda:0')
+up4.conv.double_conv.0.L.0.alpha tensor([-0.0077,  0.0005,  0.0287, -0.0344], device='cuda:0')
+up4.conv.double_conv.3.L.0.alpha tensor([-0.0088, -0.0089, -0.0169,  0.0238], device='cuda:0')
+Kernel pattern (name, k, d): [9, 3, 9, 9, 9, 9, 3, 3, 9, 9] 72 [1, 1, 3, 3, 1, 1, 1, 3, 1, 3] 18
+[train 1 0.100000 ] time elapsed: 11.2575 	train loss: 1.0845
+inc.double_conv.0.L.0.alpha tensor([-0.0090, -0.0229,  0.0316, -0.0126], device='cuda:0')
+inc.double_conv.3.L.0.alpha tensor([ 0.0172, -0.0339,  0.0162, -0.0139], device='cuda:0')
+up1.conv.double_conv.0.L.0.alpha tensor([-0.0338, -0.0095, -0.0132,  0.0422], device='cuda:0')
+up1.conv.double_conv.3.L.0.alpha tensor([-0.0326, -0.0148, -0.0103,  0.0439], device='cuda:0')
+up2.conv.double_conv.0.L.0.alpha tensor([-0.0196,  0.0025,  0.0075, -0.0028], device='cuda:0')
+up2.conv.double_conv.3.L.0.alpha tensor([-0.0250,  0.0069,  0.0070, -0.0011], device='cuda:0')
+up3.conv.double_conv.0.L.0.alpha tensor([ 0.0173, -0.0162,  0.0103, -0.0219], device='cuda:0')
+up3.conv.double_conv.3.L.0.alpha tensor([-0.0157,  0.0274,  0.0080, -0.0303], device='cuda:0')
+up4.conv.double_conv.0.L.0.alpha tensor([-0.0077,  0.0005,  0.0287, -0.0344], device='cuda:0')
+up4.conv.double_conv.3.L.0.alpha tensor([-0.0088, -0.0089, -0.0169,  0.0238], device='cuda:0')
+[searched kernel pattern] ks: [9, 3, 9, 9, 9, 9, 3, 3, 9, 9] 	ds: [1, 1, 3, 3, 1, 1, 1, 3, 1, 3]
+
+------- Start Hyperparameter Search --------
+ks:  [9, 3, 9, 9, 9, 9, 3, 3, 9, 9]
+ds:  [1, 1, 3, 3, 1, 1, 1, 3, 1, 3]
